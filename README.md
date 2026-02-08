@@ -30,7 +30,7 @@ npm run dev
 ```
 Navigate to the server folder:
 ```sh
-cd client
+cd server
 ```
 Install Expressjs dependencies:
 ```sh
@@ -69,9 +69,12 @@ Techstack:
 - Database: Firebase Realtime Database
 - UI Framwork: React Bootstrap
 
-Screenshot
-Dashboard ![Dashboard](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/dashboard.jpg)
+### Screenshots
+- Dashboard 
+![Dashboard](screenshots/dashboard.jpg)
 
-Fetch relevant information from GitHub Repository  ![Repo](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/repo.jpg)
+- Fetch relevant information from GitHub Repository 
+![Repo](screenshots/repo.jpg)
 
-Task Information ![Task](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/task.jpg)
+- Task Information 
+![Task](screenshots/task.jpg)
