@@ -42,20 +42,21 @@ npm run dev
 ```
 
 # Directory Structure:
-board-management-app
-├───client
-│   ├───public
-│   └───src
-│       ├───assets
-│       ├───Components
-│       ├───Dashboard
-│       ├───Hooks
-│       └───Pages
-│           ├───Authencation
-│           ├───Layout
-│           └───User
-├───screenshots
-└───server
+```text
+board-management-app/
+├── client/                
+│   ├── public/            
+│   └── src/              
+│       ├── assets/       
+│       ├── Components/    
+│       ├── Dashboard/
+│       ├── Hooks/      
+│       └── Pages/     
+│           ├── Authentication
+│           ├── Layout/  
+│           └── User/    
+├── screenshots/       
+└── server/
 
 Key Features:
 - Create, Add, Edit, Delete boards, cards, task
@@ -69,9 +70,8 @@ Techstack:
 - UI Framwork: React Bootstrap
 
 Screenshot
-- Dashboard
-()
-- Fetch relevant information from GitHub Repository
-()
-- Task Information
-()
+Dashboard ![Dashboard](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/dashboard.jpg)
+
+Fetch relevant information from GitHub Repository  ![Repo](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/repo.jpg)
+
+Task Information ![Task](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/task.jpg)
