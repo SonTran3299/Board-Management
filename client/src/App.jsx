@@ -1,0 +1,47 @@
+import { BrowserRouter, Route, Routes } from "react-router-dom"
+import SignUp from "./Pages/Authencation/SignUp"
+import Login from "./Pages/Authencation/Login"
+import LoginGit from "./Pages/Authencation/LoginGit"
+import Profile from "./Pages/User/Profile"
+import MainLayout from "./Pages/Layout/MainLayout"
+import Dashboard from "./Dashboard/Dashboard"
+import { AuthProvider } from "./Hooks/AuthContext"
+import { database } from "../firebase"
+import Home from "./Pages/Home"
+import axios from "axios"
+import { useEffect } from "react"
+import { useState } from "react"
+import AuthMiddleWare from "./Components/AuthMiddleWare"
+
+function App() {
+  const id = "QVU8MoymdoSPME4r2oElXJDhcmo1";
+  return (
+    <>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />}>
+            </Route>
+
+            <Route path="/login-success" element={<LoginGit />} />
+            <Route element={<AuthMiddleWare />}>
+              <Route element={<MainLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="users" element={<Profile />} />
+              </Route>
+            </Route>
+
+
+            <Route path="auth">
+              <Route path="sign-up" element={<SignUp />} />
+              <Route path="login" element={<Login />} />
+            </Route>
+
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </>
+  )
+}
+
+export default App
