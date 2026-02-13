@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom"
 import SignUp from "./Pages/Authentication/SignUp"
 import Login from "./Pages/Authentication/Login"
 import LoginGit from "./Pages/Authentication/LoginGit"
@@ -7,10 +7,9 @@ import MainLayout from "./Pages/Layout/MainLayout"
 import Dashboard from "./Dashboard/Dashboard"
 import { AuthProvider } from "./Hooks/AuthContext"
 import Home from "./Pages/Home"
-import AuthMiddleWare from "./Components/AuthMiddleWare"
+import AuthMiddleWare from "./Middleware/AuthMiddleWare"
 
 function App() {
-  const id = "QVU8MoymdoSPME4r2oElXJDhcmo1";
   return (
     <>
       <AuthProvider>
@@ -23,7 +22,7 @@ function App() {
             <Route element={<AuthMiddleWare />}>
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="users" element={<Profile />} />
+                <Route path="/user-profile" element={<Profile />} />
               </Route>
             </Route>
 

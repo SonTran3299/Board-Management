@@ -12,7 +12,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-dotenv.config({path: '../.env'} );
+dotenv.config({ path: '../.env' });
 
 if (!admin.apps.length) {
     admin.initializeApp({
@@ -22,37 +22,18 @@ if (!admin.apps.length) {
 }
 
 const PORT = 5000;
-app.listen(PORT, () => {
-    console.log(`Server đang chạy tại: http://localhost:${PORT}`);
-});
 
-// const express = require('express');
-// const cors = require('cors');
-// const axios = require('axios');
-// const app = express();
-
-
-// app.use(cors());
-// app.use(express.json());
-
-// var admin = require("firebase-admin");
-
-// var serviceAccount = require("./serviceAccountKey.json");
-
-// admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount),
-//     databaseURL: "https://board-management-database-default-rtdb.asia-southeast1.firebasedatabase.app"
-// });
+const CLIENT_URL = process.env.VITE_CLIENT_URL;
 
 const database = admin.database();
 
 app.post('/auth/login', async (req, res) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Send ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).send('No Token');
     }
 
-    const idToken = authHeader.split('Send ')[1];
+    const idToken = authHeader.split('Bearer ')[1];
     try {
         const decodeToken = await admin.auth().verifyIdToken(idToken);
         const uid = decodeToken.uid;
@@ -105,8 +86,6 @@ app.get('/auth/github/callback', async (req, res) => {
                         email: email
                     })
                 }
-
-
             } catch (error) {
                 return res.status(500).json({ error: error.message });
             }
@@ -114,14 +93,14 @@ app.get('/auth/github/callback', async (req, res) => {
             const fbCustomToken = await admin.auth().createCustomToken(userId);
             const userRef = database.ref(`users/${userId}`);
             await userRef.update({
-                id: userId,
+                //id: userId,
                 name: name,
                 userName: login,
                 email: email || `${login}@github.com`,
                 github_access_token: accessToken,
             })
 
-            res.redirect(`http://localhost:5173/login-success?fb_token=${fbCustomToken}`);
+            res.redirect(`${CLIENT_URL}/login-success?fb_token=${fbCustomToken}`);
         } else {
             res.status(404).send('Token khong thay');
         }
@@ -140,7 +119,7 @@ app.post('/auth/sign-up', async (req, res) => {
         });
         res.status(200).json({ message: 'Luu Db thanh cong' });
     } catch (error) {
-        res.status(500).json({ message: 'error.message' });
+        res.status(500).json({ message: error.message });
     }
 })
 
@@ -187,7 +166,8 @@ app.get('/boards', async (req, res) => {
                 id: key,
                 name: boardData.name || '',
                 description: boardData.description || '',
-                cards: cards
+                cards: cards,
+                cardOrder: boardData.cardOrder || [],
             }
         })
         res.status(200).json(boardArray);
@@ -197,13 +177,14 @@ app.get('/boards', async (req, res) => {
 })
 
 app.post('/boards', async (req, res) => {
-    const { name } = req.body;
+    const boardData = req.body;
     try {
         const newBoard = admin.database().ref('boards').push();
 
         await newBoard.set({
-            name: name,
-            cards: []
+            ...boardData,
+            cards: {},
+            cardOrder: []
         });
         res.status(201).json({ message: "Đã thêm bảng", id: newBoard.key });
 
@@ -234,7 +215,7 @@ app.delete('/boards/:id', async (req, res) => {
     try {
         await admin.database().ref(`boards/${id}`).remove();
 
-        res.status(200).json({ message: "OK" });
+        res.status(204).json({ message: "OK" });
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -265,6 +246,7 @@ app.get('/boards/:id/cards', async (req, res) => {
                 id: key,
                 name: cardData.name || '',
                 description: cardData.description || '',
+                owner: cardData.owner || '',
                 tasks: tasks,
                 list_member: cardData.list_member || []
             }
@@ -282,12 +264,22 @@ app.post('/boards/:id/cards', async (req, res) => {
 
     try {
         const card = admin.database().ref(`boards/${id}/cards`).push();
+        //const newCardId = card.key;
         await card.set({
             ...cardData,
-            name: cardData.name,
             list_member: [],
-            task: {}
+            tasks: {}
         });
+
+        // const boardData = admin.database().ref(`boards/${id}`);
+        // const snapshot = await boardData.child('cardOrder').once('value');
+        // let currentOrder = snapshot.val();
+        // if (!Array.isArray(currentOrder)) {
+        //     currentOrder = [];
+        // }
+        // currentOrder.push(newCardId);
+
+        // await boardData.child('cardOrder').set(currentOrder);
 
         res.status(201).json({ message: 'Created' });
     } catch (error) {
@@ -317,7 +309,8 @@ app.post('/boards/:boardId/cards/:cardId/list_member', async (req, res) => {
 
     try {
         const cardRef = admin.database().ref(`boards/${boardId}/cards/${cardId}`);
-        const cardData = await cardRef.once('value').val();
+        const snapShot = await cardRef.once('value');
+        const cardData = snapShot.val();
         let members = cardData.list_member || [];
         if (!members.includes(memberId)) {
             members.push(memberId);
@@ -336,28 +329,30 @@ app.delete('/boards/:boardId/cards/:cardId/list_member/:memberId', async (req, r
         const cardRef = admin.database().ref(`boards/${boardId}/cards/${cardId}`);
         const snapShot = await cardRef.once('value')
         const cardData = snapShot.val();
+
         if (!cardData || !cardData.list_member) {
             return res.status(404).json({ message: "Not found" });
         }
         const selectedMember = Array.isArray(cardData.list_member) ? cardData.list_member : [];
-        const deleteMember = selectedMember.filter(id => id !== memberId);
+        const currentMember = selectedMember.filter(id => id !== memberId);
 
         const currentTask = { ...cardData.tasks };
 
         if (cardData.tasks) {
-            Object.keys(currentTask).forEach(taskID => {
-                const task = currentTask[taskID];
+            Object.keys(currentTask).forEach(taskId => {
+                const task = currentTask[taskId];
+
                 if (task.assign && Array.isArray(task.assign)) {
-                    currentTask[taskID].assign = task.assign.filter(id => id !== memberId);
+                    currentTask[taskId].assign = task.assign.filter(id => id !== memberId);
                 }
             })
         }
 
         await cardRef.update({
-            list_member: deleteMember,
+            list_member: currentMember,
             tasks: currentTask
         });
-        res.status(200).json({ message: "OK" });
+        res.status(204).json({ message: "OK" });
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -369,7 +364,7 @@ app.delete('/boards/:boardId/cards/:cardId', async (req, res) => {
     try {
         await admin.database().ref(`boards/${boardId}/cards/${cardId}`).remove();
 
-        res.status(200).json({ message: "OK" });
+        res.status(204).json({ message: "OK" });
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -434,7 +429,7 @@ app.delete('/boards/:boardId/cards/:cardId/tasks/:taskId', async (req, res) => {
     try {
         await admin.database().ref(`boards/${boardId}/cards/${cardId}/tasks/${taskId}`).remove();
 
-        res.status(200).json({ message: "OK" });
+        res.status(204).json({ message: "OK" });
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -486,7 +481,7 @@ app.delete('/boards/:boardId/cards/:cardId/tasks/:taskId/assign/:memberId', asyn
             }
             await taskRef.update({ assign: newAssign });
             delete newAssign[memberId];
-            res.status(200).json({ message: "OK" });
+            res.status(204).json({ message: "OK" });
         } else {
             res.status(404).json({ message: "Not found" });
         }
@@ -498,26 +493,25 @@ app.delete('/boards/:boardId/cards/:cardId/tasks/:taskId/assign/:memberId', asyn
 app.get('/repositories/:owner/:repo/github-info', async (req, res) => {
     const { owner, repo } = req.params;
     const userId = req.query.uid;
+    
     try {
-        const snapShot = await database.ref(`users/${userId}`).once('value');
-        const userData = snapShot.val();
-
-        if (!userData || !userData.github_access_token) {
-            return res.status(401).json({ error: error.message });
-        }
-
-        const token = userData.github_access_token;
-
-        const headers = {
-            Authorization: `token ${token}`,
+        let headers = {
             Accept: 'application/vnd.github.v3 + json'
+        };
+        if (userId) {
+            const snapShot = await admin.database().ref(`users/${userId}`).once('value');
+            const userData = snapShot.val();
+
+            if (userData?.github_access_token) {
+                headers.Authorization = `token ${userData.github_access_token}`;
+            }
         }
 
         const [branches, pulls, issues, commits] = await Promise.all([
-            axios.get(`https://api.github.com/repos/${owner}/${repo}/branches`, { headers }),
-            axios.get(`https://api.github.com/repos/${owner}/${repo}/pulls?state=all`, { headers }),
-            axios.get(`https://api.github.com/repos/${owner}/${repo}/issues?state=all`, { headers }),
-            axios.get(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=10`, { headers }),
+            axios.get(`https://api.github.com/repos/${owner}/${repo}/branches`, { headers }).catch(() => ({ data: [] })),
+            axios.get(`https://api.github.com/repos/${owner}/${repo}/pulls?state=all`, { headers }).catch(() => ({ data: [] })),
+            axios.get(`https://api.github.com/repos/${owner}/${repo}/issues?state=all`, { headers }).catch(() => ({ data: [] })),
+            axios.get(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=10`, { headers }).catch(() => ({ data: [] })),
         ]);
 
         const responseData = {
@@ -542,8 +536,11 @@ app.get('/repositories/:owner/:repo/github-info', async (req, res) => {
         };
 
         res.status(200).json(responseData);
-
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
 })
+
+app.listen(PORT, () => {
+    console.log(`Server đang chạy tại: http://localhost:${PORT}`);
+});

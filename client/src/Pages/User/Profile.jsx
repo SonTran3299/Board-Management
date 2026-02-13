@@ -1,5 +1,5 @@
 import { Alert, Button, Col, Container, Form, Modal, Row } from "react-bootstrap";
-import { getDatabase, ref, child, get, set } from "firebase/database";
+import { getDatabase, ref, child, get, set, update } from "firebase/database";
 
 import { useEffect, useState } from "react";
 import { useAuth } from "../../Hooks/AuthContext";
@@ -24,16 +24,15 @@ const Profile = () => {
             console.log(error);
             setAlert({ show: true, message: 'Có lỗi xảy ra', title: 'Lỗi' });
         })
-    }, []);
+    }, [user]);
 
     const handleChange = (e) => {
         setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
     }
 
     const handleUpdateInfo = () => {
-        set(ref(database, `users/${user.uid}`), {
-            name: userInfo.name,
-            email: userInfo.email
+        update(ref(database, `users/${user.uid}`), {
+            name: userInfo.name
         }).then(() => {
             setAlert({ show: true, message: 'Thay đổi thông tin thành công', title: 'Thành công' });
 

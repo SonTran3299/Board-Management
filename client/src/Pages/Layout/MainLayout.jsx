@@ -11,7 +11,6 @@ const MainLayout = () => {
     const dbRef = ref(database);
     const [userInfo, setUserInfo] = useState({});
     useEffect(() => {
-        
         get(child(dbRef, `users/${user.uid}`)).then(snapshot => {
             if (snapshot.exists()) {
                 setUserInfo(snapshot.val());
@@ -28,6 +27,11 @@ const MainLayout = () => {
         await logOut();
         navigate('/');
     }
+
+    const handleProfile = (e) => {
+        e.preventDefault();
+        navigate('/users');
+    }
     return (
         <>
             <Navbar expand="lg" className="border-bottom">
@@ -35,10 +39,10 @@ const MainLayout = () => {
                     <Navbar.Toggle aria-controls="nav-bar"></Navbar.Toggle>
                     <Navbar.Collapse id="nav-bar">
                         <Nav className="me-auto">
-                            <Nav.Link as={Link} to={'/dashboard'} className="btn btn-success">Home</Nav.Link>
+                            <Nav.Link as={Link} to={'/dashboard'} className="fs-5">Home</Nav.Link>
                         </Nav>
-                        <NavDropdown title={userInfo.name || "None"}>
-                            <NavDropdown.Item as={Link} to={`/users`}>Hồ sơ người dùng</NavDropdown.Item>
+                        <NavDropdown title={userInfo.name || "None"} className="fs-5">
+                            <NavDropdown.Item as={Link} to={'/user-profile'}>Hồ sơ người dùng</NavDropdown.Item>
                             <NavDropdown.Item type="button" onClick={handleLogOut}>Đăng xuất</NavDropdown.Item>
                         </NavDropdown>
                     </Navbar.Collapse>

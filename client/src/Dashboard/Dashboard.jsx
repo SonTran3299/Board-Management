@@ -1,40 +1,43 @@
-import { Button, Col, Container, Form, Modal, Row } from "react-bootstrap";
+import { Badge, Button, Col, Container, Form, Modal, Row, Table } from "react-bootstrap";
 import Boards from "../Components/Boards";
 import { useState } from "react";
 import { useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../Hooks/AuthContext";
+import AlertModal from "../Components/AlertModal";
+import { useCallback } from "react";
 
 const Dashboard = () => {
     const { user } = useAuth();
     const [boards, setBoards] = useState([]);
     const [users, setUsers] = useState([]);
-    const [newBoardName, setNewBoardName] = useState("");
+    const [newBoard, setNewBoard] = useState({ name: '', description: '' });
     const API_URL = import.meta.env.VITE_API_URL;
     const [showModal, setShowModal] = useState(false);
     const [repoData, setRepoData] = useState(null);
     const [showModalRepo, setShowModalRepo] = useState(false);
     const [repoInput, setRepoInput] = useState({ owner: '', repo: '' });
-    const [loading, setLoading] = useState(false);
+    const [alert, setAlert] = useState({ show: false, message: '', title: '' });
 
-    const getBoards = async () => {
+    const getBoards = useCallback(async () => {
         axios.get(`${API_URL}/boards`)
             .then(res => {
                 setBoards(res.data);
             })
             .catch(error => {
                 console.log("Loi tai sanh sach bang");
+                setAlert({ show: true, message: 'Lỗi tải danh sách bảng', title: 'Có lỗi xảy ra' });
             });
-    };
+    }, [API_URL]);
 
-    const getUsers = async () => {
+    const getUsers = useCallback(async () => {
         axios.get(`${API_URL}/users`)
             .then(res => {
                 setUsers(res.data);
             }).catch(error => {
                 console.log(error);
             })
-    }
+    }, [API_URL]);
 
     const getRepoData = async (owner, repo) => {
         try {
@@ -48,24 +51,30 @@ const Dashboard = () => {
     useEffect(() => {
         getBoards();
         getUsers();
-    }, [getBoards]);
+    }, [getBoards, getUsers]);
+
+    const handleChange = (e) => {
+        setNewBoard({ ...newBoard, [e.target.name]: e.target.value });
+    }
 
     const handleAddBoard = async (e) => {
         e.preventDefault();
-        if (!newBoardName.trim()) {
-            alert("Nhap ten bang");
+        if (!newBoard.name) {
+            setAlert({ show: true, message: 'Hãy nhập tên bảng', title: 'Lỗi' });
             return;
         }
         try {
             await axios.post(`${API_URL}/boards`, {
-                name: newBoardName
+                name: newBoard.name,
+                description: newBoard.description,
+                owner: user.uid
             });
             await getBoards();
-            setNewBoardName("");
+            setNewBoard({ name: '', description: '' });
             setShowModal(false);
 
         } catch (error) {
-            console.log("loi:", error);
+            console.log("Lỗi:", error);
         }
     }
 
@@ -73,7 +82,7 @@ const Dashboard = () => {
         if (repoInput.owner && repoInput.repo) {
             getRepoData(repoInput.owner, repoInput.repo);
         } else {
-            alert('Nhap thong tin');
+            setAlert({ show: true, message: 'Hãy nhập thông tin người dùng', title: 'Lỗi' });
         }
     }
 
@@ -89,6 +98,9 @@ const Dashboard = () => {
         setShowModal(false);
     }
 
+    const handleCloseAlert = () => {
+        setAlert({ show: false, message: '', title: '' });
+    }
     return (
         <>
             <Container fluid className="border-top ">
@@ -105,7 +117,7 @@ const Dashboard = () => {
                     <Col className="h-100 overflow-hidden">
                         {
                             boards.map(item => (
-                                <Boards board={item} users={users} />
+                                <Boards key={item.id} board={item} users={users} />
                             ))
                         }
                     </Col>
@@ -121,16 +133,14 @@ const Dashboard = () => {
                         <Form.Label>
                             Nhập tên bảng mới
                         </Form.Label>
-                        <Form.Control as="input" className="mb-2" value={newBoardName}
-                            onChange={e => setNewBoardName(e.target.value)} />
-                        {/* <Form.Select className="mb-2">
-                            <option value={""}>Chọn người dùng muốn thêm vào bảng</option>
-                            {
-                                users.map(user =>(
-                                    <option value={user.id}>{user?.name}</option>
-                                ))
-                            }
-                        </Form.Select> */}
+                        <Form.Control as="input" className="mb-2" value={newBoard.name} name="name"
+                            onChange={handleChange} />
+
+                        <Form.Label>
+                            Nhập mô tả của bảng
+                        </Form.Label>
+                        <Form.Control as="textarea" className="mb-2" value={newBoard.description} name="description"
+                            onChange={handleChange} />
                         <Button variant="success" type="submit">Lưu</Button>
                     </Form>
                 </Modal.Body>
@@ -170,15 +180,52 @@ const Dashboard = () => {
                     {
                         repoData?.repositoryId && (
                             <div className="mt-4">
-                                <h5>Repo: {repoData.repositoryId}</h5>
+                                <h5><i className="bi bi-github"></i> Repo: {repoData.repositoryId}</h5>
                                 <hr />
-                                <p>Branches: {repoData?.branches?.length}</p>
-                                <p>Issues: {repoData?.issues?.length}</p>
+
+                                <h6 className="fw-bold text-primary">Branches ({repoData.branches?.length})</h6>
+                                <Table striped bordered hover size="sm" className="mb-4">
+                                    <thead>
+                                        <tr>
+                                            <th>Tên Nhánh</th>
+                                            <th>Last Commit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {repoData.branches?.map((b, index) => (
+                                            <tr key={index}>
+                                                <td><code>{b.name}</code></td>
+                                                <td className="text-muted small">{b.lastCommitSha.substring(0, 7)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+
+                                <h6 className="fw-bold text-success">Recent Commits</h6>
+                                <Table striped bordered hover size="sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Commit</th>
+                                            <th>SHA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {repoData.commits?.map((c, index) => (
+                                            <tr key={index}>
+                                                <td className="text-truncate" style={{ maxWidth: '300px' }}>{c.message}</td>
+                                                <td><Badge bg="secondary">{c.sha.substring(0, 7)}</Badge></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+
                             </div>
                         )
                     }
                 </Modal.Body>
             </Modal>
+
+            <AlertModal alertObj={alert} closeAlert={handleCloseAlert} />
         </>
     );
 }

@@ -161,16 +161,35 @@ const Cards = ({ card, board, users, refreshCard }) => {
                     </Card.Title>
                 </Card.Header>
 
+                {/* <Droppable droppableId={card.id.toString()}>
+                    {(provided) => ( */}
                 <Card.Body
+                // {...provided.droppableProps}
+                // ref={provided.innerRef}
                 >
                     {
                         tasks.map((item, index) => (
-                            <div>
-                                <Tasks key={item.id} board={board} task={item} card={card} users={users} refreshTask={getTasks} refreshCard={refreshCard} />
-                            </div>
+                            // <Draggable key={item.id} draggableId={item.id.toString()} index={index}>
+                            //     {(provided) => (
+                                    <div
+                                        // ref={provided.innerRef}
+                                        // {...provided.draggableProps}
+                                        // {...provided.dragHandleProps}
+                                        // style={{
+                                        //     ...provided.draggableProps.style,
+                                        //     userSelect: "none",
+                                        // }}
+                                    >
+                                        <Tasks key={item.id} board={board} task={item} card={card} users={users} refreshTask={getTasks} refreshCard={refreshCard} />
+                                    </div>
+                            //     )}
+                            // </Draggable>
                         ))
                     }
+                    {/* {provided.placeholder} */}
                 </Card.Body>
+                {/* )} */}
+                {/* </Droppable> */}
 
                 <Card.Footer>
                     <Button variant="outline-primary" className="w-100" onClick={(e) => setShowModal(true)}>

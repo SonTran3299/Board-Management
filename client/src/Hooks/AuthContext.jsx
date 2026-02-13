@@ -1,5 +1,6 @@
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
+import { Container, Spinner } from "react-bootstrap";
 
 const AuthContext = createContext();
 
@@ -10,7 +11,6 @@ const AuthProvider = ({ children }) => {
     useEffect(() => {
         const subcribeUser = onAuthStateChanged(auth, authUser => {
             if (authUser) {
-                // localStorage.setItem('userId', JSON.stringify(authUser.uid));
                 setUser(authUser);
 
             } else {
@@ -21,14 +21,18 @@ const AuthProvider = ({ children }) => {
         return () => subcribeUser();
     }, [auth]);
     const logOut = () => {
-        // localStorage.removeItem('userId');
         return signOut(auth);
     }
     return (
         <>
             <AuthContext.Provider value={{ user, logOut, reload }}>
-                {!reload ? children : <div>Sninner</div>}
-                {/* {children} */}
+                {
+                    !reload ? children :
+                        <Container className="d-flex justify-content-center align-items-center"
+                            style={{ minHeight: "100vh" }}>
+                            <Spinner animation="border" />
+                        </Container>
+                }
             </AuthContext.Provider>
         </>
     );

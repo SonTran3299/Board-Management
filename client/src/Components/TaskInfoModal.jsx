@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { Button, Col, Container, Form, InputGroup, Modal, OverlayTrigger, Popover, Row } from "react-bootstrap";
 
-const TaskInfoModal = ({ showModal, handleCloseModal, boardId, card, task, users }) => {
+const TaskInfoModal = ({ showModal, handleCloseModal, boardId, card, task, users, refreshTasks, refreshCard }) => {
     const API_URL = import.meta.env.VITE_API_URL;
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [taskContent, setTaskContent] = useState({});
@@ -16,10 +16,14 @@ const TaskInfoModal = ({ showModal, handleCloseModal, boardId, card, task, users
         }
         else
             setSelectedUsers([]);
-    }, [task?.id, showModal]);
+    }, [task, showModal]);
 
     const handleChange = (e) => {
-        setTaskContent({ ...taskContent, [e.target.name]: e.target.value });
+        const { name, value, type, checked } = e.target;
+        setTaskContent({
+            ...taskContent,
+            [name]: type === 'checkbox' ? checked : value
+        })
     }
 
     const handleSaveTask = async () => {
@@ -28,6 +32,15 @@ const TaskInfoModal = ({ showModal, handleCloseModal, boardId, card, task, users
             await axios.put(`${API_URL}/boards/${boardId}/cards/${card?.id}/tasks/${task?.id}`,
                 taskContent,
             );
+
+            if (refreshTasks) {
+                await refreshTasks();
+            }
+
+            if (refreshCard) {
+                await refreshCard();
+            }
+
             handleCloseModal();
         } catch (error) {
             console.log(error);
@@ -48,6 +61,8 @@ const TaskInfoModal = ({ showModal, handleCloseModal, boardId, card, task, users
 
                 const selectedUserList = [...selectedUsers, userInfo];
                 setSelectedUsers(selectedUserList);
+
+                if (refreshTasks) await refreshTasks();
 
                 setTaskContent({
                     ...taskContent,
@@ -102,7 +117,8 @@ const TaskInfoModal = ({ showModal, handleCloseModal, boardId, card, task, users
                                 <Form.Group>
                                     <Form.Label className="">
                                         <InputGroup>
-                                            <InputGroup.Checkbox />
+                                            <InputGroup.Checkbox name="checked" checked={taskContent?.checked || false}
+                                                onChange={handleChange} />
                                             <Form.Control as="textarea" className="fw-bold fs-5 border-0"
                                                 style={{
                                                     resize: 'none', backgroundColor: 'transparent'
@@ -120,9 +136,10 @@ const TaskInfoModal = ({ showModal, handleCloseModal, boardId, card, task, users
                                     <Form.Select className="mb-2" onChange={handleSelectedUsers}>
                                         <option value={""}>Chọn người dùng muốn thêm vào bảng</option>
                                         {
-                                            users.map(user => (
-                                                <option key={user.id} value={user.id}>{user?.name}</option>
-                                            ))
+                                            users.filter(user => !selectedUsers.some(selected => selected.id === user.id))
+                                                .map(user => (
+                                                    <option key={user.id} value={user.id}>{user?.name}</option>
+                                                ))
                                         }
                                     </Form.Select>
                                 </Form.Group>
@@ -144,10 +161,9 @@ const TaskInfoModal = ({ showModal, handleCloseModal, boardId, card, task, users
                                     {
                                         selectedUsers.length > 0 ? (
                                             selectedUsers.map(user => (
-                                                <OverlayTrigger trigger={"click"} placement="right" rootClose overlay={popoverDelete(user.id)}>
+                                                <OverlayTrigger trigger={"click"} placement="right" rootClose overlay={popoverDelete(user.id)} key={user.id}>
                                                     <Button variant="outline-primary" className="me-1" key={user.id}>{user.name}</Button>
                                                 </OverlayTrigger>
-
                                             ))
                                         ) : <></>
                                     }
