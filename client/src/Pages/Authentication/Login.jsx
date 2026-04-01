@@ -45,12 +45,12 @@ const Login = () => {
                     }
                 });
         } else {
-            alert('Nhap thong tin nguoi dung');
+            setAlert({ show: true, message: 'Nhập thông tin người dùng', title: 'Lỗi nhập liệu' });
             return;
         }
     }
 
-    const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+    const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
     const REDIRECT_URI = `${API_URL}/auth/github/callback`;
     const SCOPE = "repo user";
 
@@ -98,7 +98,7 @@ const Login = () => {
                             </div>
                         </Form>
                         <div className="d-flex justify-content-center mt-2 border-top pt-2">
-                            <Button variant="outline-primary" href={gitHubAuthUrl} className="w-50">
+                            <Button variant="outline-primary" href={gitHubAuthUrl} className="w-50" onClick={console.log(API_URL)}>
                                 <i className="bi bi-github"></i> Đăng nhập bằng GitHub
                             </Button>
                         </div>

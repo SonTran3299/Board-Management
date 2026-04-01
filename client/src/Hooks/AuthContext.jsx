@@ -20,6 +20,18 @@ const AuthProvider = ({ children }) => {
         })
         return () => subcribeUser();
     }, [auth]);
+
+    // const getToken = async () => {
+    //     if (!user) {
+    //         return null;
+    //     }
+    //     try {
+    //         return await user.getIdToken();
+    //     } catch (error) {
+    //         console.log(error);
+    //         return null
+    //     }
+    // }
     const logOut = () => {
         return signOut(auth);
     }

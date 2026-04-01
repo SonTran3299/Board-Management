@@ -1,11 +1,11 @@
 import { Button, Modal } from "react-bootstrap";
 
-const AlertModal = ({ alertObj, closeAlert }) => {
+const AlertModal = ({ alertObj = { show: true, title: 'Title', message: 'Message' }, closeAlert }) => {
     return (
         <>
             <Modal show={alertObj.show} onHide={closeAlert}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{alertObj.title}</Modal.Title>     
+                    <Modal.Title>{alertObj.title}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     {alertObj.message}

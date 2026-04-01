@@ -2,17 +2,17 @@ import { Button, Card, Form, InputGroup, Modal, OverlayTrigger, Popover } from "
 import { useState } from "react";
 import { useEffect } from "react";
 import axios from "axios";
-import Tasks from "./Tasks";
 import { useCallback } from "react";
-import { useAuth } from "../Hooks/AuthContext";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import ButtonPopover from "./ButtonPopover";
+import { Droppable, Draggable } from "@hello-pangea/dnd";
+import ButtonPopover from "../../../Components/ButtonPopover";
+import Tasks from "./Tasks";
+import { useAuth } from "../../../Hooks/AuthContext";
 
 //là card Chứa tasks
-const Cards = ({ card, board, users, refreshCard }) => {
+const Cards = ({ card, board, users, refreshCard, updateCardTaskOrder, dragHandleProps }) => {
     const API_URL = import.meta.env.VITE_API_URL;
     const [tasks, setTasks] = useState([]);
-    const [cardName, setCardName] = useState(card?.name);
+    const [cardData, setCardData] = useState(card);
     const [showModal, setShowModal] = useState(false);
     const [showModalDelete, setShowModalDelete] = useState(false);
     const [showModalDetail, setShowModalDetail] = useState(false);
@@ -43,9 +43,9 @@ const Cards = ({ card, board, users, refreshCard }) => {
     }, [JSON.stringify(card?.list_member), users?.id]);
 
     const handleUpdateCardName = async () => {
-        if (!cardName.trim()) return;
+        if (!cardData?.name.trim()) return;
         await axios.put(`${API_URL}/boards/${board?.id}/cards/${card?.id}`, {
-            name: cardName
+            name: cardData?.name
         }).catch(error => {
             console.log("loi:", error);
         })
@@ -119,12 +119,20 @@ const Cards = ({ card, board, users, refreshCard }) => {
     const handleAddTask = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API_URL}/boards/${board?.id}/cards/${card?.id}/tasks`, {
+            const res = await axios.post(`${API_URL}/boards/${board?.id}/cards/${card?.id}/tasks`, {
                 name: newTask.name,
                 description: newTask.description,
                 owner: user.uid,
                 createdAt: new Date().toISOString()
             });
+
+            const newTaskId = res.data.taskId;
+            if (newTaskId) {
+                const updatedTaskOrder = [...(card.taskOrder || []), newTaskId];
+
+                updateCardTaskOrder(card.id, updatedTaskOrder);
+            }
+
             await getTasks();
             setShowModal(false);
             setNewTask({ name: '', description: '' });
@@ -145,13 +153,24 @@ const Cards = ({ card, board, users, refreshCard }) => {
     }
     return (
         <>
-            <Card style={{ width: '18rem' }} className="me-2">
-                <Card.Header>
+            <Card
+                //style={{ width: '18rem', maxHeight: '100%' }} 
+                className="me-2 d-flex flex-column"
+                style={{
+                    width: '300px',
+                    maxHeight: '100%',
+                    flexShrink: 0
+                }}
+            >
+                <Card.Header {...dragHandleProps} style={{ cursor: 'grab' }}>
                     <Card.Title className="mb-2">
                         <Form>
                             <InputGroup>
-                                <Form.Control type="input" value={cardName} className="fs-4 border-0"
-                                    onChange={(e) => setCardName(e.target.value)}
+                                <Form.Control type="input" value={cardData?.name} className="fs-4 border-0"
+                                    onChange={(e) => setCardData(prev => ({
+                                        ...prev,
+                                        name: e.target.value
+                                    }))}
                                     onBlur={handleUpdateCardName} />
                                 <OverlayTrigger trigger={"click"} placement="right" rootClose overlay={popover}>
                                     <Button variant="outline-primary" className="rounded"><i className="bi bi-pencil-square"></i></Button>
@@ -161,37 +180,55 @@ const Cards = ({ card, board, users, refreshCard }) => {
                     </Card.Title>
                 </Card.Header>
 
-                {/* <Droppable droppableId={card.id.toString()}>
-                    {(provided) => ( */}
-                <Card.Body
-                // {...provided.droppableProps}
-                // ref={provided.innerRef}
-                >
+                <Droppable droppableId={card.id.toString()}>
                     {
-                        tasks.map((item, index) => (
-                            // <Draggable key={item.id} draggableId={item.id.toString()} index={index}>
-                            //     {(provided) => (
-                                    <div
-                                        // ref={provided.innerRef}
-                                        // {...provided.draggableProps}
-                                        // {...provided.dragHandleProps}
-                                        // style={{
-                                        //     ...provided.draggableProps.style,
-                                        //     userSelect: "none",
-                                        // }}
-                                    >
-                                        <Tasks key={item.id} board={board} task={item} card={card} users={users} refreshTask={getTasks} refreshCard={refreshCard} />
-                                    </div>
-                            //     )}
-                            // </Draggable>
-                        ))
-                    }
-                    {/* {provided.placeholder} */}
-                </Card.Body>
-                {/* )} */}
-                {/* </Droppable> */}
+                        provided => (
+                            <Card.Body
 
-                <Card.Footer>
+                                {...provided.droppableProps}
+                                ref={provided.innerRef}
+                                className="overflow-y-auto flex-grow-1"
+                                style={{
+                                    flex: 1,
+                                    minHeight: '50px'
+                                }}>
+                                {
+                                    card?.taskOrder.map((taskId, index) => {
+                                        const taskData = tasks.find(c => c.id === taskId);
+
+                                        if (!taskData) return null;
+
+                                        return (
+                                            <Draggable key={taskData.id} draggableId={taskData.id.toString()} index={index}>
+                                                {
+                                                    draggableProvided => (
+                                                        <div key={taskId}
+                                                            ref={draggableProvided.innerRef}
+                                                            {...draggableProvided.draggableProps}
+                                                            {...draggableProvided.dragHandleProps}
+                                                            style={{
+                                                                ...draggableProvided.draggableProps.style,
+                                                                userSelect: "none",
+                                                            }}
+                                                        >
+                                                            <Tasks key={taskData} board={board}
+                                                                task={taskData}
+                                                                card={cardData}
+                                                                users={users} refreshTask={getTasks} refreshCard={refreshCard} />
+                                                        </div>
+                                                    )
+                                                }
+                                            </Draggable>
+
+                                        )
+                                    })
+                                }
+                                {provided.placeholder}
+                            </Card.Body>
+                        )
+                    }
+                </Droppable>
+                <Card.Footer className="flex-shrink-0">
                     <Button variant="outline-primary" className="w-100" onClick={(e) => setShowModal(true)}>
                         <i className="bi bi-plus-lg"></i>
                     </Button>

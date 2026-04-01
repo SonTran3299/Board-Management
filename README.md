@@ -15,11 +15,6 @@ Initialize a new frontend web project.
 npm create vite@latest
 ```
 
-Create new frontend project
-```sh
-npm create vite@latest
-```
-
 Install Frontend dependencies:
 ```sh
 npm install
@@ -70,11 +65,10 @@ Techstack:
 - UI Framwork: React Bootstrap
 
 ### Screenshots
-- Dashboard 
-![Dashboard](screenshots/dashboard.jpg)
+- Dashboard ![Dashboard](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/dashboard.jpg)
 
 - Fetch relevant information from GitHub Repository 
-![Repo](screenshots/repo.jpg)
+![Repo](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/repo.jpg)
 
 - Task Information 
-![Task](screenshots/task.jpg)
+![Task](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/task.jpg)

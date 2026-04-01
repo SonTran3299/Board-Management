@@ -1,7 +1,5 @@
-import { Button, Card, Form, InputGroup, Modal, OverlayTrigger, Popover } from "react-bootstrap";
-import CardInfoModal from "./TaskInfoModal";
+import { Button, Form, InputGroup, Modal, OverlayTrigger, Popover } from "react-bootstrap";
 import { useState } from "react";
-import { useEffect } from "react";
 import TaskInfoModal from "./TaskInfoModal";
 import axios from "axios";
 
@@ -66,6 +64,7 @@ const Tasks = ({ board, card, task, users, refreshTask, refreshCard }) => {
                     <Button variant="outline-primary" className="rounded"><i className="bi bi-pencil-square"></i></Button>
                 </OverlayTrigger>
             </InputGroup>
+            
             <TaskInfoModal showModal={showModal} handleCloseModal={handleCloseModal}
                 boardId={board?.id} card={card} task={task} users={users} refreshTasks={refreshTask} refreshCard={refreshCard} />
 

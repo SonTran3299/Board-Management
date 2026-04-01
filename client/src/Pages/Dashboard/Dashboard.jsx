@@ -1,11 +1,12 @@
-import { Badge, Button, Col, Container, Form, Modal, Row, Table } from "react-bootstrap";
-import Boards from "../Components/Boards";
+import { Badge, Button, Col, Container, Form, Modal, Offcanvas, Row, Table } from "react-bootstrap";
 import { useState } from "react";
 import { useEffect } from "react";
 import axios from "axios";
-import { useAuth } from "../Hooks/AuthContext";
-import AlertModal from "../Components/AlertModal";
+import { useAuth } from "../../Hooks/AuthContext";
+import AlertModal from "../../Components/AlertModal";
 import { useCallback } from "react";
+import api from "../../function/api";
+import Boards from "../../features/dashboard/components/Boards";
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -14,18 +15,18 @@ const Dashboard = () => {
     const [newBoard, setNewBoard] = useState({ name: '', description: '' });
     const API_URL = import.meta.env.VITE_API_URL;
     const [showModal, setShowModal] = useState(false);
+    const [showBoards, setShowBoards] = useState(false);
     const [repoData, setRepoData] = useState(null);
     const [showModalRepo, setShowModalRepo] = useState(false);
     const [repoInput, setRepoInput] = useState({ owner: '', repo: '' });
     const [alert, setAlert] = useState({ show: false, message: '', title: '' });
 
     const getBoards = useCallback(async () => {
-        axios.get(`${API_URL}/boards`)
+        api.get(`${API_URL}/boards`)
             .then(res => {
                 setBoards(res.data);
             })
             .catch(error => {
-                console.log("Loi tai sanh sach bang");
                 setAlert({ show: true, message: 'Lỗi tải danh sách bảng', title: 'Có lỗi xảy ra' });
             });
     }, [API_URL]);
@@ -78,6 +79,14 @@ const Dashboard = () => {
         }
     }
 
+    const handleDeleteBoardInState = (boardId) => {
+        setBoards(prevBoards => prevBoards.filter(b => b.id !== boardId));
+    }
+
+    const handleUpdateBoardInState = (updatedBoard) => {
+        setBoards(prev => prev.map(b => b.id === updatedBoard.id ? updatedBoard : b));
+    };
+
     const handleGetRepo = () => {
         if (repoInput.owner && repoInput.repo) {
             getRepoData(repoInput.owner, repoInput.repo);
@@ -101,23 +110,50 @@ const Dashboard = () => {
     const handleCloseAlert = () => {
         setAlert({ show: false, message: '', title: '' });
     }
+
+    const handleCloseBoardsCanvas = () => {
+        setShowBoards(false);
+    }
+
+    const scrollToBoard = useCallback((boardId) => {
+        handleCloseBoardsCanvas();
+
+        setTimeout(() => {
+            const board = document.getElementById(boardId);
+            if (board) {
+                board.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }, 300)
+    }, [handleCloseBoardsCanvas]);
     return (
         <>
-            <Container fluid className="border-top ">
+            <Container fluid className="border-top">
                 <div className="d-flex justify-content-between px-3">
-                    <Button variant="secondary" className="mt-3 me-2" onClick={(e) => { setShowModal(true) }}>
-                        <i className="bi bi-plus-lg"></i> Thêm bảng
-                    </Button>
+                    <div>
+                        <Button variant="primary" className="mt-3 me-2" onClick={(e) => { setShowBoards(true) }}>
+                            <i className="bi bi-list"></i>
+                        </Button>
+                        <Button variant="secondary" className="mt-3 me-2" onClick={(e) => { setShowModal(true) }}>
+                            <i className="bi bi-plus-lg"></i> Thêm bảng
+                        </Button>
+                    </div>
+
                     <Button variant="secondary" className="mt-3" onClick={(e) => { setShowModalRepo(true) }}>
                         <i className="bi bi-plus-lg"></i> Xem Respository
                     </Button>
                 </div>
 
                 <Row className="h-100">
-                    <Col className="h-100 overflow-hidden">
+                    <Col className="h-100 overflow-auto">
                         {
                             boards.map(item => (
-                                <Boards key={item.id} board={item} users={users} />
+                                <Boards key={item.id} board={item} users={users}
+                                    onDeleteBoard={handleDeleteBoardInState}
+                                    onUpdateSuccess={handleUpdateBoardInState}
+                                />
                             ))
                         }
                     </Col>
@@ -226,6 +262,24 @@ const Dashboard = () => {
             </Modal>
 
             <AlertModal alertObj={alert} closeAlert={handleCloseAlert} />
+
+            <Offcanvas show={showBoards} onHide={handleCloseBoardsCanvas}>
+                <Offcanvas.Header closeButton>
+                    <Offcanvas.Title>Danh sách bảng</Offcanvas.Title>
+                </Offcanvas.Header>
+                <Offcanvas.Body>
+                    {
+                        boards.map(item => (
+                            <Button id={item.id} className="mb-2 w-100" variant="outline-primary"
+                                onClick={() => scrollToBoard(item.id)}
+                            >
+                                {item.name}
+                            </Button>
+                        ))
+                    }
+
+                </Offcanvas.Body>
+            </Offcanvas>
         </>
     );
 }

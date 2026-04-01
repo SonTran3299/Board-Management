@@ -1,13 +1,13 @@
 import { createUserWithEmailAndPassword, deleteUser, getAuth } from "firebase/auth";
-import { ref, set } from "firebase/database";
 import { useState } from "react";
 import { Button, Col, Container, Form, InputGroup, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { database } from "../../../firebase";
 import axios from "axios";
+import AlertModal from "../../Components/AlertModal";
 const SignUp = () => {
     const [userInfo, setUserInfo] = useState({});
     const [showPassword, setShowPassword] = useState(false);
+    const [alert, setAlert] = useState({ show: false, message: '', title: '' });
     const navigate = useNavigate();
     const API_URL = import.meta.env.VITE_API_URL;
     const handleChange = (e) => {
@@ -29,7 +29,7 @@ const SignUp = () => {
                             email: user.email,
                             name: user.name || user.email
                         })
-                        alert('Luu thanh cong');
+                        setAlert({ show: true, message: 'Đăng ký thành công', title: 'Thành công' });
                         setUserInfo({ email: '', password: '' });
                         navigate('/dashboard');
                     } catch (error) {
@@ -38,13 +38,17 @@ const SignUp = () => {
                     }
                 }).catch(error => {
                     if (error.code === 'auth/email-already-in-use') {
-                        alert('Email đã đăng ký.');
+                        setAlert({ show: true, message: 'Email đã đăng ký.', title: 'Có lỗi xảy ra' });
                     }
                 })
         } else {
-            alert('Nhap thong tin nguoi dung');
+            setAlert({ show: true, message: 'Hãy nhập thông tin người dùng', title: 'Có lỗi xảy ra' });
             return;
         }
+    }
+
+    const handleCloseAlert = () => {
+        setAlert({ show: false, message: '', title: '' });
     }
     return (
         <>
@@ -92,6 +96,8 @@ const SignUp = () => {
                     </Col>
                 </Row>
             </Container>
+
+            <AlertModal alertObj={alert} closeAlert={handleCloseAlert} />
         </>
     );
 }
