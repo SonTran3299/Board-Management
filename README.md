@@ -37,7 +37,7 @@ npm run dev
 ```
 
 # Directory Structure:
-```text
+
 board-management-app/
 ├── client/                
 │   ├── public/            
@@ -56,7 +56,7 @@ board-management-app/
 Key Features:
 - Create, Add, Edit, Delete boards, cards, task
 - Assign or Remove a member to a task
-- 
+- DnD Cards and Tasks
 
 Techstack:
 - Front-end: Reactjs
