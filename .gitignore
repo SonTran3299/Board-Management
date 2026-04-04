@@ -9,7 +9,6 @@ lerna-debug.log*
 
 node_modules
 serviceAccountKey.json
-firebase.js
 .env
 dist
 dist-ssr

@@ -36,23 +36,6 @@ Running a server with Nodemon:
 npm run dev
 ```
 
-# Directory Structure:
-
-board-management-app/
-├── client/                
-│   ├── public/            
-│   └── src/              
-│       ├── assets/       
-│       ├── Components/    
-│       ├── Dashboard/
-│       ├── Hooks/      
-│       └── Pages/     
-│           ├── Authentication
-│           ├── Layout/  
-│           └── User/    
-├── screenshots/       
-└── server/
-
 Key Features:
 - Create, Add, Edit, Delete boards, cards, task
 - Assign or Remove a member to a task

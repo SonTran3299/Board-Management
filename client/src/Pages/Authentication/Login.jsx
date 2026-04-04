@@ -98,7 +98,7 @@ const Login = () => {
                             </div>
                         </Form>
                         <div className="d-flex justify-content-center mt-2 border-top pt-2">
-                            <Button variant="outline-primary" href={gitHubAuthUrl} className="w-50" onClick={console.log(API_URL)}>
+                            <Button variant="outline-primary" href={gitHubAuthUrl} className="w-50">
                                 <i className="bi bi-github"></i> Đăng nhập bằng GitHub
                             </Button>
                         </div>
