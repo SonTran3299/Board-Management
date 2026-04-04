@@ -56,5 +56,4 @@ Techstack:
 - Task Information 
 ![Task](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/task.jpg)
 
-- Demo Link
-[Demo Link](https://sontran3299.github.io/Board-Management/)
+- [Demo Link](https://sontran3299.github.io/Board-Management/)
