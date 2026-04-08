@@ -57,3 +57,6 @@ Techstack:
 ![Task](https://github.com/SonTran3299/Board-Management/blob/main/screenshots/task.jpg)
 
 - [Demo Link](https://sontran3299.github.io/Board-Management/)
+
+    Demo Account: admin@gmail.com
+         Password: 123456

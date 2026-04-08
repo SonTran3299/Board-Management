@@ -30,6 +30,8 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_CLIENT_URL: ${{ secrets.VITE_CLIENT_URL }}
+          VITE_GITHUB_CLIENT_ID: ${{ secrets.VITE_GITHUB_CLIENT_ID }}
+          VITE_GITHUB_CLIENT_SECRETS: ${{ secrets.VITE_GITHUB_CLIENT_SECRETS }}
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4

@@ -7,6 +7,7 @@ import AlertModal from "../../Components/AlertModal";
 import { useCallback } from "react";
 import api from "../../function/api";
 import Boards from "../../features/dashboard/components/Boards";
+import AnimatedPage from "../../Components/AnimatedPage";
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -130,35 +131,38 @@ const Dashboard = () => {
     }, [handleCloseBoardsCanvas]);
     return (
         <>
-            <Container fluid className="border-top">
-                <div className="d-flex justify-content-between px-3">
-                    <div>
-                        <Button variant="primary" className="mt-3 me-2" onClick={(e) => { setShowBoards(true) }}>
-                            <i className="bi bi-list"></i>
-                        </Button>
-                        <Button variant="secondary" className="mt-3 me-2" onClick={(e) => { setShowModal(true) }}>
-                            <i className="bi bi-plus-lg"></i> Thêm bảng
+            <AnimatedPage>
+                <Container fluid className="border-top">
+                    <div className="d-flex justify-content-between px-3">
+                        <div>
+                            <Button variant="primary" className="mt-3 me-2" onClick={(e) => { setShowBoards(true) }}>
+                                <i className="bi bi-list"></i>
+                            </Button>
+                            <Button variant="secondary" className="mt-3 me-2" onClick={(e) => { setShowModal(true) }}>
+                                <i className="bi bi-plus-lg"></i> Thêm bảng
+                            </Button>
+                        </div>
+
+                        <Button variant="secondary" className="mt-3" onClick={(e) => { setShowModalRepo(true) }}>
+                            <i className="bi bi-plus-lg"></i> Xem Respository
                         </Button>
                     </div>
 
-                    <Button variant="secondary" className="mt-3" onClick={(e) => { setShowModalRepo(true) }}>
-                        <i className="bi bi-plus-lg"></i> Xem Respository
-                    </Button>
-                </div>
+                    <Row className="h-100">
+                        <Col className="h-100 overflow-auto">
+                            {
+                                boards.map(item => (
+                                    <Boards key={item.id} board={item} users={users}
+                                        onDeleteBoard={handleDeleteBoardInState}
+                                        onUpdateSuccess={handleUpdateBoardInState}
+                                    />
+                                ))
+                            }
+                        </Col>
+                    </Row>
+                </Container>
+            </AnimatedPage>
 
-                <Row className="h-100">
-                    <Col className="h-100 overflow-auto">
-                        {
-                            boards.map(item => (
-                                <Boards key={item.id} board={item} users={users}
-                                    onDeleteBoard={handleDeleteBoardInState}
-                                    onUpdateSuccess={handleUpdateBoardInState}
-                                />
-                            ))
-                        }
-                    </Col>
-                </Row>
-            </Container>
 
             <Modal show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>

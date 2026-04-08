@@ -15,10 +15,11 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "firebase": "^12.8.0",
-    "react": "^19.2.0",
+    "motion": "^12.38.0",
+    "react": "^19.2.4",
     "react-bootstrap": "^2.10.10",
     "react-bootstrap-icons": "^1.11.6",
-    "react-dom": "^19.2.0",
+    "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
