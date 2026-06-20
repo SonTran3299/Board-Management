@@ -29,13 +29,13 @@ const app = express();
 //app.use(cors());
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://sontran3299.github.io',
+  process.env.VITE_CLIENT_URL,
   'http://127.0.0.1:5173'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Bị chặn bởi CORS: Origin này không được phép!'));
