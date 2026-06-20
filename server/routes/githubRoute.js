@@ -1,5 +1,5 @@
 import express from 'express';
-import admin from 'firebase-admin';
+import { getDatabase } from 'firebase-admin/database';
 import axios from 'axios';
 
 const router = express.Router();
@@ -12,12 +12,14 @@ router.get('/:owner/:repo/github-info', async (req, res) => {
         let headers = {
             Accept: 'application/vnd.github.v3+json'
         };
+        
         if (userId) {
-            const snapShot = await admin.database().ref(`users/${userId}`).once('value');
+            const db = getDatabase();
+            const snapShot = await db.ref(`users/${userId}`).once('value');
             const userData = snapShot.val();
 
             if (userData?.github_access_token) {
-                headers.Authorization = `token ${userData.github_access_token}`;
+                headers.Authorization = `Bearer ${userData.github_access_token}`;
             }
         }
 
@@ -32,7 +34,7 @@ router.get('/:owner/:repo/github-info', async (req, res) => {
             repositoryId: `${owner}/${repo}`,
             branches: branches.data.map(b => ({
                 name: b.name,
-                lastCommitSha: b.commit.sha
+                lastCommitSha: b.commit?.sha || ''
             })),
             pulls: pulls.data.map(p => ({
                 title: p.title,
@@ -45,7 +47,7 @@ router.get('/:owner/:repo/github-info', async (req, res) => {
                 })),
             commits: commits.data.map(c => ({
                 sha: c.sha,
-                message: c.commit.message
+                message: c.commit?.message || ''
             }))
         };
 
@@ -53,6 +55,6 @@ router.get('/:owner/:repo/github-info', async (req, res) => {
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
-})
+});
 
 export default router;

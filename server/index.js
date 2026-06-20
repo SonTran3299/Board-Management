@@ -1,12 +1,21 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '../.env' });
+
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
 import admin from 'firebase-admin';
 import { createRequire } from 'module';
-import dotenv from 'dotenv';
+
+import http from 'http';
+import https from 'https';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
 
 const require = createRequire(import.meta.url);
-//const serviceAccount = require("./serviceAccountKey.json");
+
+// axios.defaults.httpAgent = new http.Agent({ keepAlive: false });
+// axios.defaults.httpsAgent = new https.Agent({ keepAlive: false });
+
 let serviceAccount;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -37,15 +46,14 @@ app.use(cors({
 }));
 
 app.use(express.json());
-dotenv.config({ path: '../.env' });
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(serviceAccount),
     databaseURL: "https://board-management-database-default-rtdb.asia-southeast1.firebasedatabase.app"
   });
 }
-
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';

@@ -1,11 +1,12 @@
 import express from 'express';
-import admin from 'firebase-admin';
+import { getDatabase } from 'firebase-admin/database';
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const snapShot = await admin.database().ref('users').once('value');
+        const db = getDatabase();
+        const snapShot = await db.ref('users').once('value');
         const data = snapShot.val();
 
         if (!data) {
@@ -27,7 +28,8 @@ router.get('/:uid', async (req, res) => {
     const { uid } = req.params;
 
     try {
-        const snapShot = await admin.database().ref(`users/${uid}`).once('value');
+        const db = getDatabase();
+        const snapShot = await db.ref(`users/${uid}`).once('value');
         const userData = snapShot.val();
 
         if (userData) {

@@ -1,5 +1,5 @@
 import express from 'express';
-import admin from 'firebase-admin';
+import { getDatabase } from 'firebase-admin/database';
 import protect from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -10,8 +10,9 @@ router.get('/', protect, async (req, res) => {
 
     try {
         const userId = req.user.uid;
+        const db = getDatabase();
 
-        const snapShot = await admin.database().ref('boards')
+        const snapShot = await db.ref('boards')
             .orderByChild('owner')
             .equalTo(userId)
             .once('value');
@@ -47,7 +48,7 @@ router.get('/', protect, async (req, res) => {
                 cards: cards,
                 cardOrder: boardData.cardOrder || [],
             }
-        })
+        });
 
         res.status(200).json({
             boards: boardArray,
@@ -62,7 +63,9 @@ router.get('/', protect, async (req, res) => {
 router.get('/board-list', protect, async (req, res) => {
     try {
         const userId = req.user.uid;
-        const snapShot = await admin.database().ref('boards')
+        const db = getDatabase();
+        
+        const snapShot = await db.ref('boards')
             .orderByChild('owner')
             .equalTo(userId)
             .once('value');
@@ -82,7 +85,8 @@ router.get('/board-list', protect, async (req, res) => {
 router.post('/', async (req, res) => {
     const boardData = req.body;
     try {
-        const newBoard = admin.database().ref('boards').push();
+        const db = getDatabase();
+        const newBoard = db.ref('boards').push();
 
         await newBoard.set({
             ...boardData,
@@ -101,7 +105,8 @@ router.put('/:id', async (req, res) => {
     const { name } = req.body;
 
     try {
-        const board = admin.database().ref(`boards/${id}`);
+        const db = getDatabase();
+        const board = db.ref(`boards/${id}`);
 
         await board.update({
             name: name
@@ -116,7 +121,8 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        await admin.database().ref(`boards/${id}`).remove();
+        const db = getDatabase();
+        await db.ref(`boards/${id}`).remove();
 
         res.status(204).json({ message: "OK" });
     } catch (error) {
@@ -130,7 +136,8 @@ router.patch('/:id/reorder', protect, async (req, res) => {
     const userId = req.user.uid;
 
     try {
-        const boardRef = admin.database().ref(`boards/${id}`);
+        const db = getDatabase();
+        const boardRef = db.ref(`boards/${id}`);
 
         const snapshot = await boardRef.once('value');
         if (!snapshot.exists() || snapshot.val().owner !== userId) {
@@ -149,7 +156,8 @@ router.get('/:id/cards', async (req, res) => {
     const { id } = req.params;
 
     try {
-        const snapShot = await admin.database().ref(`boards/${id}/cards`).once('value');
+        const db = getDatabase();
+        const snapShot = await db.ref(`boards/${id}/cards`).once('value');
         const data = snapShot.val();
 
         if (!data) {
@@ -175,7 +183,7 @@ router.get('/:id/cards', async (req, res) => {
                 list_member: cardData.list_member || [],
                 taskOrder: cardData.taskOrder || []
             }
-        })
+        });
 
         res.status(200).json(cardArray);
     } catch (error) {
@@ -188,7 +196,8 @@ router.post('/:id/cards', async (req, res) => {
     const cardData = req.body;
 
     try {
-        const boardRef = admin.database().ref(`boards/${id}`);
+        const db = getDatabase();
+        const boardRef = db.ref(`boards/${id}`);
 
         const newCardRef = boardRef.child('cards').push();
         const newCardId = newCardRef.key;
@@ -219,7 +228,8 @@ router.put('/:boardId/cards/:cardId', async (req, res) => {
     const { name } = req.body;
 
     try {
-        const card = admin.database().ref(`boards/${boardId}/cards/${cardId}`);
+        const db = getDatabase();
+        const card = db.ref(`boards/${boardId}/cards/${cardId}`);
 
         await card.update({
             name: name
@@ -234,7 +244,8 @@ router.delete('/:boardId/cards/:cardId', async (req, res) => {
     const { boardId, cardId } = req.params;
 
     try {
-        const boardRef = admin.database().ref(`boards/${boardId}`);
+        const db = getDatabase();
+        const boardRef = db.ref(`boards/${boardId}`);
         await boardRef.child(`cards/${cardId}`).remove();
 
         const snapshot = await boardRef.child('cardOrder').once('value');
@@ -256,7 +267,8 @@ router.patch('/:boardId/cards/:cardId/reorder', async (req, res) => {
     const { taskOrder } = req.body;
 
     try {
-        const cardRef = admin.database().ref(`boards/${boardId}/cards/${cardId}`);
+        const db = getDatabase();
+        const cardRef = db.ref(`boards/${boardId}/cards/${cardId}`);
 
         await cardRef.update({ taskOrder: taskOrder });
 
@@ -271,7 +283,8 @@ router.post('/:boardId/cards/:cardId/list_member', async (req, res) => {
     const { memberId } = req.body;
 
     try {
-        const cardRef = admin.database().ref(`boards/${boardId}/cards/${cardId}`);
+        const db = getDatabase();
+        const cardRef = db.ref(`boards/${boardId}/cards/${cardId}`);
         const snapShot = await cardRef.once('value');
         const cardData = snapShot.val();
         let members = cardData.list_member || [];
@@ -289,7 +302,8 @@ router.delete('/:boardId/cards/:cardId/list_member/:memberId', async (req, res) 
     const { boardId, cardId, memberId } = req.params;
 
     try {
-        const cardRef = admin.database().ref(`boards/${boardId}/cards/${cardId}`);
+        const db = getDatabase();
+        const cardRef = db.ref(`boards/${boardId}/cards/${cardId}`);
         const snapShot = await cardRef.once('value')
         const cardData = snapShot.val();
 
@@ -325,7 +339,8 @@ router.get('/:boardId/cards/:cardId/tasks', async (req, res) => {
     const { cardId, boardId } = req.params;
 
     try {
-        const snapShot = await admin.database().ref(`boards/${boardId}/cards/${cardId}/tasks`).once('value');
+        const db = getDatabase();
+        const snapShot = await db.ref(`boards/${boardId}/cards/${cardId}/tasks`).once('value');
         const data = snapShot.val();
 
         if (!data) {
@@ -348,11 +363,11 @@ router.post('/:boardId/cards/:cardId/tasks', async (req, res) => {
     const taskData = req.body;
 
     try {
-        const cardRef = admin.database().ref(`boards/${boardId}/cards/${cardId}`);
+        const db = getDatabase();
+        const cardRef = db.ref(`boards/${boardId}/cards/${cardId}`);
         const newTaskRef = cardRef.child('tasks').push();
         const newTaskId = newTaskRef.key;
 
-        //const task = admin.database().ref(`boards/${boardId}/cards/${cardId}/tasks`).push();
         await newTaskRef.set({
             ...taskData
         });
@@ -376,7 +391,8 @@ router.put('/:boardId/cards/:cardId/tasks/:taskId', async (req, res) => {
     const updateTask = req.body;
 
     try {
-        const task = admin.database().ref(`boards/${boardId}/cards/${cardId}/tasks/${taskId}`);
+        const db = getDatabase();
+        const task = db.ref(`boards/${boardId}/cards/${cardId}/tasks/${taskId}`);
 
         await task.update(updateTask);
 
@@ -390,7 +406,8 @@ router.delete('/:boardId/cards/:cardId/tasks/:taskId', async (req, res) => {
     const { boardId, cardId, taskId } = req.params;
 
     try {
-        await admin.database().ref(`boards/${boardId}/cards/${cardId}/tasks/${taskId}`).remove();
+        const db = getDatabase();
+        await db.ref(`boards/${boardId}/cards/${cardId}/tasks/${taskId}`).remove();
 
         res.status(204).json({ message: "OK" });
     } catch (error) {
@@ -403,7 +420,7 @@ router.post('/:boardId/cards/:cardId/tasks/:taskId/assign', async (req, res) => 
     const { memberId } = req.body;
 
     try {
-        const db = admin.database();
+        const db = getDatabase();
         const cardRef = db.ref(`boards/${boardId}/cards/${cardId}`);
         const taskRef = cardRef.child(`/tasks/${taskId}`);
 
@@ -430,7 +447,8 @@ router.delete('/:boardId/cards/:cardId/tasks/:taskId/assign/:memberId', async (r
     const { boardId, cardId, taskId, memberId } = req.params;
 
     try {
-        const taskRef = admin.database().ref(`boards/${boardId}/cards/${cardId}/tasks/${taskId}`);
+        const db = getDatabase();
+        const taskRef = db.ref(`boards/${boardId}/cards/${cardId}/tasks/${taskId}`);
         const snapShot = await taskRef.once('value');
         const taskData = snapShot.val();
 
@@ -443,7 +461,6 @@ router.delete('/:boardId/cards/:cardId/tasks/:taskId/assign/:memberId', async (r
                 delete newAssign[memberId];
             }
             await taskRef.update({ assign: newAssign });
-            delete newAssign[memberId];
             res.status(204).json({ message: "OK" });
         } else {
             res.status(404).json({ message: "Not found" });
@@ -451,6 +468,6 @@ router.delete('/:boardId/cards/:cardId/tasks/:taskId/assign/:memberId', async (r
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
-})
+});
 
 export default router;
