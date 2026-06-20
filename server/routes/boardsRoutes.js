@@ -5,6 +5,9 @@ import protect from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 router.get('/', protect, async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
     try {
         const userId = req.user.uid;
 
@@ -12,14 +15,24 @@ router.get('/', protect, async (req, res) => {
             .orderByChild('owner')
             .equalTo(userId)
             .once('value');
-        const data = snapShot.val();
 
-        if (!data) {
+        const totalCount = snapShot.numChildren();
+        if (totalCount === 0) {
+            return res.status(200).json({ boards: [], totalPages: 0 });
+        }
+
+        const allData = snapShot.val();
+        const allKeys = Object.keys(allData);
+
+        const startIndex = (page - 1) * limit;
+        const selectedKeys = allKeys.slice(startIndex, startIndex + limit);
+
+        if (!allData) {
             return res.status(200).json([]);
         }
 
-        const boardArray = Object.keys(data).map(key => {
-            const boardData = data[key];
+        const boardArray = selectedKeys.map(key => {
+            const boardData = allData[key];
             let cards = [];
             if (boardData.cards) {
                 cards = Object.keys(boardData.cards).map(key => ({
@@ -36,7 +49,31 @@ router.get('/', protect, async (req, res) => {
             }
         })
 
-        res.status(200).json(boardArray);
+        res.status(200).json({
+            boards: boardArray,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+})
+
+router.get('/board-list', protect, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        const snapShot = await admin.database().ref('boards')
+            .orderByChild('owner')
+            .equalTo(userId)
+            .once('value');
+
+        const data = snapShot.val();
+        const boardList = Object.keys(data).map(key => ({
+            id: key,
+            name: data[key].name
+        }));
+
+        res.status(200).json(boardList);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

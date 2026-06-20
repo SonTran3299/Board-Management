@@ -105,7 +105,7 @@ const SignUp = () => {
                                         Đăng ký
                                     </Button>
                                 </div>
-                                <div className="d-flex justify-content-center mt-2">
+                                <div className="d-flex justify-content-center mt-2 border-top pt-2">
                                     <Button variant="outline-success" className="w-50"
                                         onClick={() => navigate('/auth/login')}
                                         disabled={isLoading}>

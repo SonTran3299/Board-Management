@@ -2,17 +2,24 @@ import { Button, Form, InputGroup, Modal, OverlayTrigger, Popover } from "react-
 import { useState } from "react";
 import TaskInfoModal from "./TaskInfoModal";
 import axios from "axios";
+import DeleteModal from "../../../Components/DeleteModal";
 
 // Nội dung trên thẻ nhiệm vụ, là các task
 const Tasks = ({ board, card, task, users, refreshTask, refreshCard }) => {
     const API_URL = import.meta.env.VITE_API_URL;
-    const [showModal, setShowModal] = useState(false);
-    const [showModalDelete, setShowModalDelete] = useState(false);
+    const [showModalInfo, setShowModalInfo] = useState(false);
+    const [modalDelete, setModalDelete] = useState({
+        show: false,
+        title: 'Cảnh báo',
+        message: 'Bạn có chắc muốn xoá nhiệm vụ này không. Nếu xoá sẽ mất hết dữ liệu!',
+        feature: 'Xoá nhiệm vụ',
+        cancel: 'Huỷ xoá'
+    });
 
     const handelDeleteTask = async () => {
         try {
             await axios.delete(`${API_URL}/boards/${board?.id}/cards/${card?.id}/tasks/${task?.id}`);
-            setShowModalDelete(false);
+            handleCloseDeleteModal();
 
             await refreshTask();
         } catch (error) {
@@ -37,21 +44,21 @@ const Tasks = ({ board, card, task, users, refreshTask, refreshCard }) => {
         <Popover>
             <Popover.Body className="p-2">
                 <Button variant="danger" onClick={() => {
-                    setShowModalDelete(true);
+                    setModalDelete(prev => ({ ...prev, show: true }))
                     document.body.click();
                 }}>
                     Xoá nhiệm vụ
                 </Button>
             </Popover.Body>
         </Popover>
-    );
+    )
 
-    const handleCloseModal = () => {
-        setShowModal(false);
+    const handleCloseInfoModal = () => {
+        setShowModalInfo(false);
     }
 
-    const handleCloseModalDelete = () => {
-        setShowModalDelete(false);
+    const handleCloseDeleteModal = () => {
+        setModalDelete(prev => ({ ...prev, show: false }));
     }
 
     return (
@@ -59,27 +66,16 @@ const Tasks = ({ board, card, task, users, refreshTask, refreshCard }) => {
             <InputGroup className="mb-3">
                 <InputGroup.Checkbox checked={task?.checked || false} onChange={handleCheckedTask} />
                 <Form.Control as="textarea" type="button" className="overflow-hidden" style={{ resize: 'none' }} readOnly
-                    onClick={() => setShowModal(true)} value={task?.name} />
+                    onClick={() => setShowModalInfo(true)} value={task?.name} />
                 <OverlayTrigger trigger={"click"} placement="right" rootClose overlay={popover}>
                     <Button variant="outline-primary" className="rounded"><i className="bi bi-pencil-square"></i></Button>
                 </OverlayTrigger>
             </InputGroup>
-            
-            <TaskInfoModal showModal={showModal} handleCloseModal={handleCloseModal}
+
+            <TaskInfoModal showModal={showModalInfo} handleCloseModal={handleCloseInfoModal}
                 boardId={board?.id} card={card} task={task} users={users} refreshTasks={refreshTask} refreshCard={refreshCard} />
 
-            <Modal show={showModalDelete} onHide={handleCloseModalDelete}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Cảnh báo</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Bạn có chắc muốn xoá nhiệm vụ này không. Nếu xoá sẽ mất hết dữ liệu.
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="danger" onClick={handelDeleteTask}>Xoá nhiệm vụ</Button>
-                    <Button variant="secondary" onClick={handleCloseModalDelete}>Huỷ xoá</Button>
-                </Modal.Footer>
-            </Modal>
+            <DeleteModal handleClose={handleCloseDeleteModal} deleteObj={modalDelete} handleFeature={handelDeleteTask} />
         </>
     );
 }

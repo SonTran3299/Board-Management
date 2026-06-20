@@ -8,29 +8,37 @@ import { useCallback } from "react";
 import api from "../../function/api";
 import Boards from "../../features/dashboard/components/Boards";
 import AnimatedPage from "../../Components/AnimatedPage";
+import DashboardPagination from "../../features/dashboard/components/DashboardPagination";
+import { useSearchParams } from "react-router-dom";
 
 const Dashboard = () => {
     const { user } = useAuth();
-    const [boards, setBoards] = useState([]);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [boards, setBoards] = useState({ boards: [], totalPages: 0 });
+    const [allBoards, setAllBoards] = useState([]);
     const [users, setUsers] = useState([]);
     const [newBoard, setNewBoard] = useState({ name: '', description: '' });
     const API_URL = import.meta.env.VITE_API_URL;
     const [showModal, setShowModal] = useState(false);
-    const [showBoards, setShowBoards] = useState(false);
     const [repoData, setRepoData] = useState(null);
     const [showModalRepo, setShowModalRepo] = useState(false);
     const [repoInput, setRepoInput] = useState({ owner: '', repo: '' });
     const [alert, setAlert] = useState({ show: false, message: '', title: '' });
 
+    const page = parseInt(searchParams.get('page')) || 1;
+
     const getBoards = useCallback(async () => {
-        api.get(`${API_URL}/boards`)
-            .then(res => {
-                setBoards(res.data);
-            })
-            .catch(error => {
-                setAlert({ show: true, message: 'Lỗi tải danh sách bảng', title: 'Có lỗi xảy ra' });
-            });
-    }, [API_URL]);
+        try {
+            const res = await api.get(`${API_URL}/boards?page=${page}&limit=5`);
+            setBoards(res.data);
+        } catch (error) {
+            setAlert({ show: true, message: 'Lỗi tải danh sách bảng', title: 'Có lỗi xảy ra' });
+        }
+    }, [API_URL, page]);
+
+    const handlePageChange = (newPage) => {
+        setSearchParams({ page: newPage });
+    };
 
     const getUsers = useCallback(async () => {
         axios.get(`${API_URL}/users`)
@@ -49,6 +57,11 @@ const Dashboard = () => {
             console.log(error);
         }
     }
+
+    useEffect(() => {
+        api.get(`${API_URL}/boards/board-list`)
+            .then(res => setAllBoards(res.data))
+    }, []);
 
     useEffect(() => {
         getBoards();
@@ -80,12 +93,22 @@ const Dashboard = () => {
         }
     }
 
-    const handleDeleteBoardInState = (boardId) => {
-        setBoards(prevBoards => prevBoards.filter(b => b.id !== boardId));
+    const handleDeleteBoard = (boardId) => {
+        setBoards(prev => ({
+            ...prev,
+            boards: prev.boards.filter(b => b.id !== boardId)
+        }));
+
+        setAllBoards(prev => prev.filter(b => b.id !== boardId));
     }
 
-    const handleUpdateBoardInState = (updatedBoard) => {
-        setBoards(prev => prev.map(b => b.id === updatedBoard.id ? updatedBoard : b));
+    const handleUpdateBoard = (updatedBoard) => {
+        setBoards(prev => ({
+            ...prev,
+            boards: prev.boards.map(b => b.id === updatedBoard.id ? updatedBoard : b)
+        }));
+
+        setAllBoards(prev => prev.map(b => b.id === updatedBoard.id ? updatedBoard : b));
     };
 
     const handleGetRepo = () => {
@@ -112,57 +135,86 @@ const Dashboard = () => {
         setAlert({ show: false, message: '', title: '' });
     }
 
-    const handleCloseBoardsCanvas = () => {
-        setShowBoards(false);
+    const handleJumpToBoard = (boardId) => {
+        const index = allBoards.findIndex(b => b.id === boardId);
+        if (index !== -1) {
+            const limit = 5;
+            const targetPage = Math.floor(index / limit) + 1;
+
+            setSearchParams({ page: targetPage });
+
+            setTimeout(() => {
+                const e = document.getElementById(boardId);
+                if (e) e.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        }
     }
-
-    const scrollToBoard = useCallback((boardId) => {
-        handleCloseBoardsCanvas();
-
-        setTimeout(() => {
-            const board = document.getElementById(boardId);
-            if (board) {
-                board.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        }, 300)
-    }, [handleCloseBoardsCanvas]);
     return (
         <>
             <AnimatedPage>
-                <Container fluid className="border-top">
-                    <div className="d-flex justify-content-between px-3">
-                        <div>
-                            <Button variant="primary" className="mt-3 me-2" onClick={(e) => { setShowBoards(true) }}>
-                                <i className="bi bi-list"></i>
-                            </Button>
-                            <Button variant="secondary" className="mt-3 me-2" onClick={(e) => { setShowModal(true) }}>
-                                <i className="bi bi-plus-lg"></i> Thêm bảng
-                            </Button>
+                <div className="d-flex" style={{ height: '100vh', overflow: 'hidden' }}>
+                    {/* Sidebar */}
+                    <div className="bg-light border-end" style={{ width: '250px', overflowY: 'auto' }}>
+                        <div className="p-3">
+                            <h5 className="text-primary">Danh sách bảng</h5>
+                            </div>
+                        <div className="list-group list-group-flush">
+                            {allBoards.map(b => (
+                                <button
+                                    key={b.id}
+                                    className="list-group-item list-group-item-action"
+                                    onClick={() => handleJumpToBoard(b.id)}
+                                >
+                                    <i className="bi bi-layout-three-columns me-2"></i>
+                                    {b.name}
+                                </button>
+                            ))}
                         </div>
-
-                        <Button variant="secondary" className="mt-3" onClick={(e) => { setShowModalRepo(true) }}>
-                            <i className="bi bi-plus-lg"></i> Xem Respository
-                        </Button>
                     </div>
 
-                    <Row className="h-100">
-                        <Col className="h-100 overflow-auto">
-                            {
-                                boards.map(item => (
-                                    <Boards key={item.id} board={item} users={users}
-                                        onDeleteBoard={handleDeleteBoardInState}
-                                        onUpdateSuccess={handleUpdateBoardInState}
-                                    />
-                                ))
-                            }
-                        </Col>
-                    </Row>
-                </Container>
-            </AnimatedPage>
+                    {/* Main Content */}
+                    <div className="flex-grow-1 d-flex flex-column vh-100 overflow-hidden bg-light">
+                        <div className="flex-shrink-0 p-3 bg-white border-bottom">
+                            <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <Button variant="secondary" onClick={() => setShowModal(true)}>
+                                        <i className="bi bi-plus-lg"></i> Thêm bảng
+                                    </Button>
+                                </div>
+                                <Button variant="primary" onClick={() => setShowModalRepo(true)}>
+                                    <i className="bi bi-plus-lg"></i> Xem Repository
+                                </Button>
+                            </div>
+                        </div>
 
+                        <div className="flex-grow-1 overflow-y-auto p-3">
+                            {
+                                boards.boards && boards.boards.length > 0 ? (
+                                    boards.boards.map(item => (
+                                        <Boards
+                                            key={item.id}
+                                            board={item}
+                                            users={users}
+                                            onDeleteBoard={handleDeleteBoard}
+                                            onUpdateSuccess={handleUpdateBoard}
+                                        />
+                                    ))
+                                ) : (
+                                    <p className="text-center mt-5">Không có bảng.</p>
+                                )
+                            }
+                        </div>
+
+                        <div className="flex-shrink-0 pt-2 px-4 border-top bg-white d-flex justify-content-end">
+                            <DashboardPagination
+                                totalPages={boards.totalPages}
+                                currentPage={page}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </AnimatedPage>
 
             <Modal show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
@@ -266,24 +318,6 @@ const Dashboard = () => {
             </Modal>
 
             <AlertModal alertObj={alert} closeAlert={handleCloseAlert} />
-
-            <Offcanvas show={showBoards} onHide={handleCloseBoardsCanvas}>
-                <Offcanvas.Header closeButton>
-                    <Offcanvas.Title>Danh sách bảng</Offcanvas.Title>
-                </Offcanvas.Header>
-                <Offcanvas.Body>
-                    {
-                        boards.map(item => (
-                            <Button id={item.id} className="mb-2 w-100" variant="outline-primary"
-                                onClick={() => scrollToBoard(item.id)}
-                            >
-                                {item.name}
-                            </Button>
-                        ))
-                    }
-
-                </Offcanvas.Body>
-            </Offcanvas>
         </>
     );
 }

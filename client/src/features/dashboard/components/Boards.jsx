@@ -11,7 +11,7 @@ import AlertModal from "../../../Components/AlertModal";
 import DeleteModal from "../../../Components/DeleteModal";
 
 //là board chứa các cards là những ô chứa các task
-const Boards = ({ board, users, onDeleteBoard,onUpdateSuccess }) => {
+const Boards = ({ board, users, onDeleteBoard, onUpdateSuccess }) => {
     const [cards, setCards] = useState([]);
     const { user } = useAuth();
     const [newCard, setNewCard] = useState({ name: '', description: '' });
@@ -79,7 +79,6 @@ const Boards = ({ board, users, onDeleteBoard,onUpdateSuccess }) => {
 
     const handleCloseModalDelete = () => {
         setDeleteModal(prev => ({ ...prev, show: false }));
-        //setShowModalDelete(false);
     }
 
     const handleCloseModalDetail = () => {
@@ -120,7 +119,7 @@ const Boards = ({ board, users, onDeleteBoard,onUpdateSuccess }) => {
 
     const popover = (
         <ButtonPopover setModalInfo={setshowModalDetail}
-            setModalDelete={() => setDeleteModal(prev => ({ ...prev, show: true }))}
+            setDeleteModal={() => setDeleteModal(prev => ({ ...prev, show: true }))}
             infoTitle={"Xem chi tiết"} deleteTitle={"Xoá bảng"} />
     )
 
@@ -220,7 +219,8 @@ const Boards = ({ board, users, onDeleteBoard,onUpdateSuccess }) => {
                                         </OverlayTrigger>
                                     </InputGroup>
                                 </Form>
-                                <Button variant="secondary" className="" onClick={(e) => { setShowModal(true) }}>
+                                <Button variant="primary"
+                                    onClick={(e) => { setShowModal(true) }}>
                                     <i className="bi bi-plus-lg"></i> Thêm thẻ
                                 </Button>
                             </Container>
@@ -295,7 +295,7 @@ const Boards = ({ board, users, onDeleteBoard,onUpdateSuccess }) => {
                             Nhập tên thẻ mới
                         </Form.Label>
                         <Form.Control as="input" className="mb-2" value={newCard.name} name="name"
-                            onChange={handleChange} />
+                            onChange={handleChange} required />
                         <Form.Label>
                             Nhập mô tả của thẻ
                         </Form.Label>

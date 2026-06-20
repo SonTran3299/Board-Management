@@ -13,7 +13,7 @@ const Cards = ({ card, board, users, refreshCard, updateCardTaskOrder, dragHandl
     const API_URL = import.meta.env.VITE_API_URL;
     const [tasks, setTasks] = useState([]);
     const [cardData, setCardData] = useState(card);
-    const [showModal, setShowModal] = useState(false);
+    const [showModalAdd, setShowModalAdd] = useState(false);
     const [showModalDelete, setShowModalDelete] = useState(false);
     const [showModalDetail, setShowModalDetail] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState([]);
@@ -134,14 +134,14 @@ const Cards = ({ card, board, users, refreshCard, updateCardTaskOrder, dragHandl
             }
 
             await getTasks();
-            setShowModal(false);
+            setShowModalAdd(false);
             setNewTask({ name: '', description: '' });
         } catch (error) {
             console.log(error);
         }
     }
     const handleCloseModal = () => {
-        setShowModal(false);
+        setShowModalAdd(false);
     }
 
     const handleCloseModalDelete = () => {
@@ -229,14 +229,14 @@ const Cards = ({ card, board, users, refreshCard, updateCardTaskOrder, dragHandl
                     }
                 </Droppable>
                 <Card.Footer className="flex-shrink-0">
-                    <Button variant="outline-primary" className="w-100" onClick={(e) => setShowModal(true)}>
+                    <Button variant="outline-primary" className="w-100" onClick={(e) => setShowModalAdd(true)}>
                         <i className="bi bi-plus-lg"></i>
                     </Button>
                 </Card.Footer>
             </Card>
 
 
-            <Modal show={showModal} onHide={handleCloseModal}>
+            <Modal show={showModalAdd} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
                     <Modal.Title>Thêm nhiệm vụ mới</Modal.Title>
                 </Modal.Header>
@@ -246,8 +246,7 @@ const Cards = ({ card, board, users, refreshCard, updateCardTaskOrder, dragHandl
                             Nhập tên nhiệm vụ
                         </Form.Label>
                         <Form.Control as="input" className="mb-2" value={newTask.name} name="name"
-                            onChange={handleChange} />
-
+                            onChange={handleChange} required/>
                         <Form.Label>
                             Nhập mô tả nhiệm vụ
                         </Form.Label>
